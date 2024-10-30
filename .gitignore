@@ -35,7 +35,7 @@ yarn-error.log*
 .env*
 
 # workspace
-.code-workspace
+*.code-workspace
 
 # vercel
 .vercel
