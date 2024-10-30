@@ -1,0 +1,16 @@
+{
+  "name": "Node.js Dev Container",
+  "image": "node:22-alpine",
+  "context": "..",
+  "workspaceFolder": "/app",
+  "runArgs": ["-v", "${localWorkspaceFolder}:/app"],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/sh"
+  },
+  "postCreateCommand": "npm ci",
+  "extensions": [
+    "dbaeumer.vscode-eslint"
+  ],
+  "forwardPorts": [3000],
+  "remoteUser": "node"
+}
