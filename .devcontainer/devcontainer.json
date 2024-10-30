@@ -1,16 +1,21 @@
 {
   "name": "Node.js Dev Container",
-  "image": "node:22-alpine",
-  "context": "..",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "14"
+    }
+  },
   "workspaceFolder": "/app",
   "runArgs": ["-v", "${localWorkspaceFolder}:/app"],
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/sh"
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/sh"
+      }
+    }
   },
-  "postCreateCommand": "npm ci",
-  "extensions": [
-    "dbaeumer.vscode-eslint"
-  ],
+  "postCreateCommand": "npm install",
   "forwardPorts": [3000],
   "remoteUser": "node"
 }
