@@ -8,16 +8,17 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --verbose
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the Next.js app
-RUN npm run build
-
 # Expose the port your app will run on
 EXPOSE 3000
 
-# Start the Express.js server
-CMD ["node", "server.js"]
+# Start the Next.js development server
+CMD ["npm", "run", "dev"]
+
+# Uncomment the following lines to use Express.js server
+# COPY server.js ./
+# CMD ["node", "server.js"]
