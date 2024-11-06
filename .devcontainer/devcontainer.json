@@ -1,23 +1,48 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
-  "name": "GustyWeather Dev Container",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".." // Make sure this context is correct relative to devcontainer.json
-  },  // No need for "args" or "VARIANT" if using node:22 directly
+	"name": "Existing Dockerfile",
+	"build": {
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": "..",
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "../Dockerfile"
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/anaconda:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/conda:1": {
+			"addCondaForge": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"installDirectlyFromGitHubRelease": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"nodeGypDependencies": true,
+			"installYarnUsingApt": true,
+			"version": "lts",
+			"pnpmVersion": "latest",
+			"nvmVersion": "latest"
+		},
+		"ghcr.io/schlich/devcontainer-features/cypress:1": {},
+		"ghcr.io/schlich/devcontainer-features/node-exporter:1": {}
+	}
 
-  "workspaceFolder": "/workspaces/app", // Consistent with WORKDIR. NO ${localWorkspaceFolderBasename}
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspaces/app,type=bind,consistency=cached"  // Also /workspaces/app
-  ],
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
 
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "terminal.integrated.shell.linux": "/bin/sh"
-      }
-    }
-  },
-  "postCreateCommand": "npm install", // If you need any post-create setup
-  "forwardPorts": [3000]
- // "remoteUser": "node"  // Only include if your Dockerfile sets up a 'node' user
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Uncomment the next line to run commands after the container is created.
+	// "postCreateCommand": "cat /etc/os-release",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "devcontainer"
 }
