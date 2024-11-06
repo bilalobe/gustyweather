@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GustyWeather App ☀️
 
-## Getting Started
+This repository contains the code for my personalized weather application, built with a focus on accurate data, user customization, and insightful visualizations.  The app fetches real-time weather information from external APIs and integrates seamlessly with a Raspberry Pi (and sensor HAT) for advanced, hyperlocal metrics.
 
-First, run the development server:
+## Features ✨
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+* **Real-time Weather:** Displays current conditions (temperature, humidity, wind, etc.) for any location.
+* **Forecasting:** Provides hourly and daily forecasts with detailed weather information.
+* **Advanced Metrics:** Integrates with a Raspberry Pi and sensor HAT (Kitronik Air Quality Control) to display custom environmental metrics, historical data trends, and interactive charts powered by InfluxDB, Prometheus, and Grafana.
+* **User Customization:** Allows users to set preferred units, save favorite locations, and manage notification preferences (with future plans for severe weather alerts).
+* **Secure Authentication:**  Uses Firebase Authentication to protect user data and personalize the experience. 
+* **Modern UI:** Built with React, Next.js, and Material UI for a responsive and user-friendly interface.
+
+## Tech Stack 💻
+
+* **Front-end:** React, Next.js, Material UI
+* **Back-end:** Express.js, Firebase Cloud Functions (Serverless)
+* **Database:** InfluxDB (time-series data), Firebase (user data, preferences)
+* **Metrics & Visualization:** Prometheus, Grafana
+* **Weather API:** OpenWeatherMap, AccuWeather
+* **Hosting:** Vercel
+
+## Getting Started 🚀
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/bilalobegustyweather.git
+   cd gustyweather
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Set Up Environment Variables:**
+   - Create a `.env.local` file in the root directory and add the necessary API keys and configuration variables (e.g., weather API key, Firebase config, InfluxDB credentials).
+
+4. **Start Development Server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Raspberry Pi Setup (for Advanced Metrics):**
+   - Follow the instructions in the [Raspberry Pi Setup Guide](./docs/raspberry-pi-setup.md) to configure your Raspberry Pi, install the necessary libraries for your sensor HAT, and connect it to InfluxDB and Prometheus.
+
+## Makefile 
+
+```makefile
+dev:
+	npm run dev
+
+build:
+	npm run build
+
+deploy:
+	vercel deploy --prod  # Or your chosen deployment command
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Contributing 🤝
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Contributions are welcome! Please feel free to open issues or submit pull requests.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## License 📜
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License
