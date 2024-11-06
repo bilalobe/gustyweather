@@ -1,14 +1,15 @@
 {
-  "name": "Node.js Dev Container",
+  "name": "GustyWeather Dev Container",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": "..",
-    "args": {
-      "VARIANT": "14"
-    }
-  },
-  "workspaceFolder": "/app",
-  "runArgs": ["-v", "${localWorkspaceFolder}:/app"],
+    "context": ".." // Make sure this context is correct relative to devcontainer.json
+  },  // No need for "args" or "VARIANT" if using node:22 directly
+
+  "workspaceFolder": "/workspaces/app", // Consistent with WORKDIR. NO ${localWorkspaceFolderBasename}
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspaces/app,type=bind,consistency=cached"  // Also /workspaces/app
+  ],
+
   "customizations": {
     "vscode": {
       "settings": {
@@ -16,7 +17,7 @@
       }
     }
   },
-  "postCreateCommand": "npm install",
-  "forwardPorts": [3000],
-  "remoteUser": "node"
+  "postCreateCommand": "npm install", // If you need any post-create setup
+  "forwardPorts": [3000]
+ // "remoteUser": "node"  // Only include if your Dockerfile sets up a 'node' user
 }
