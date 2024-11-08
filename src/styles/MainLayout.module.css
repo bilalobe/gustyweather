@@ -1,0 +1,33 @@
+.mainContainer {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+  @apply min-h-[calc(100vh-64px)]; /* Subtract AppBar height */
+  @apply bg-gray-50; /* Light gray background */
+}
+
+/* Optional: Add responsive padding for AppBar */
+.appBar {
+  @apply bg-white shadow-md;
+}
+
+.toolbar {
+  @apply flex items-center justify-between;
+  @apply h-16; /* Match MUI default height */
+}
+
+.title {
+  @apply text-xl font-semibold text-gray-900;
+  @apply hover:text-gray-700 transition-colors;
+}
+
+/* Optional: Add container max-width constraints */
+@screen sm {
+  .mainContainer {
+    @apply max-w-3xl;
+  }
+}
+
+@screen lg {
+  .mainContainer {
+    @apply max-w-7xl;
+  }
+}
