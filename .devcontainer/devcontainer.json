@@ -11,8 +11,7 @@
             "version": "lts",
             "pnpmVersion": "latest",
             "nvmVersion": "latest"
-        },
-        "oh-my-zsh": true
+        }
     },
     "forwardPorts": [3000],
     "postCreateCommand": "cat /etc/os-release",
