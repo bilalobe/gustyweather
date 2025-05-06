@@ -1,16 +1,98 @@
+rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions for validation
+    function isValidEnvironmentalData(data) {
+      return data.temperature is number &&
+             data.temperature >= -50 && 
+             data.temperature <= 100 &&
+             data.humidity is number &&
+             data.humidity >= 0 &&
+             data.humidity <= 100 &&
+             data.pressure is number &&
+             data.pressure >= 800 &&
+             data.pressure <= 1200 &&
+             data.airQuality is number &&
+             data.airQuality >= 0 &&
+             data.airQuality <= 100 &&
+             data.timestamp is timestamp &&
+             data.timestamp <= request.time;
+    }
+
+    function isValidAlert(data) {
+      return data.type in ['temperature', 'humidity', 'pressure', 'airQuality'] &&
+             data.level in ['info', 'warning', 'danger'] &&
+             data.message is string &&
+             data.message.size() <= 200 &&
+             data.timestamp is timestamp &&
+             data.timestamp <= request.time;
+    }
+
+    function isAuthorizedDevice(deviceId) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)/devices/$(deviceId));
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // User's devices
+      match /devices/{deviceId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Environmental data readings
+      match /readings/{readingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && 
+                       request.auth.uid == userId && 
+                       isValidEnvironmentalData(request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Weather alerts
+      match /alerts/{alertId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && 
+                       request.auth.uid == userId && 
+                       isValidAlert(request.resource.data);
+        allow update: if request.auth != null && 
+                       request.auth.uid == userId && 
+                       isValidAlert(request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Device configurations
+      match /deviceConfig/{deviceId} {
+        allow read: if request.auth != null && 
+                     request.auth.uid == userId && 
+                     isAuthorizedDevice(deviceId);
+        allow write: if request.auth != null && 
+                      request.auth.uid == userId && 
+                      isAuthorizedDevice(deviceId);
+      }
+    }
+
+    // Public weather data (read-only)
+    match /publicWeather/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // System configuration (admin only)
+    match /systemConfig/{document=**} {
+      allow read: if request.auth != null && 
+                   exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if request.auth != null && 
+                    exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Deny all other access by default
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2024, 11, 29);
+      allow read, write: if false;
     }
   }
 }
