@@ -6,6 +6,8 @@ import Head from 'next/head';
 import MainLayout from '../layouts/MainLayout';  // Import your layout component
 import theme from '../themes/theme0';  // Import the theme configuration
 import { ReactElement } from 'react';
+import { AuthProvider } from '../context/AuthContext';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export default function MyApp({ Component, pageProps }: AppProps): ReactElement {
   return (
@@ -17,13 +19,19 @@ export default function MyApp({ Component, pageProps }: AppProps): ReactElement 
         <link rel="manifest" href="/manifest.json" /> {/* For PWA */}
         <link rel="icon" href="/favicon.ico" /> {/* Favicon */}
       </Head>
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <MainLayout> {/* Wrap your pages with the layout component */}
-          <Component {...pageProps} />
-        </MainLayout>
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+          <CssBaseline />
+          <AuthProvider>
+            <MainLayout> {/* Wrap your pages with the layout component */}
+              <ErrorBoundary>
+                <Component {...pageProps} />
+              </ErrorBoundary>
+            </MainLayout>
+          </AuthProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
     </>
   );
 }
