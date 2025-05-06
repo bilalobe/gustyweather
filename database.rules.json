@@ -1,6 +1,78 @@
 {
   "rules": {
     ".read": false,
-    ".write": false
+    ".write": false,
+    "environmentalData": {
+      "$userId": {
+        // Allow authenticated users to read their own data
+        ".read": "auth != null && auth.uid == $userId",
+        // Allow authenticated users to write their own data with validation
+        ".write": "auth != null && auth.uid == $userId",
+        "$readingId": {
+          ".validate": "newData.hasChildren(['timestamp', 'temperature', 'humidity', 'pressure', 'airQuality'])",
+          "timestamp": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
+          },
+          "temperature": {
+            ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 100"
+          },
+          "humidity": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+          },
+          "pressure": {
+            ".validate": "newData.isNumber() && newData.val() >= 800 && newData.val() <= 1200"
+          },
+          "airQuality": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+          },
+          "$other": { ".validate": false }
+        }
+      }
+    },
+    "userSettings": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId",
+        ".validate": "newData.hasChildren(['thresholds'])",
+        "thresholds": {
+          ".validate": "newData.hasChildren(['temperature', 'humidity', 'airQuality'])",
+          "temperature": {
+            "min": { ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 100" },
+            "max": { ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 100" }
+          },
+          "humidity": {
+            "min": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "max": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" }
+          },
+          "airQuality": {
+            "poor": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "hazardous": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" }
+          }
+        },
+        "lastUpdated": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
+        }
+      }
+    },
+    "deviceStatus": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId",
+        "outputStatus": {
+          ".validate": "newData.hasChildren(['displayActive', 'ledsActive', 'highPowerState', 'servoPositions', 'lastUpdate'])",
+          "displayActive": { ".validate": "newData.isBoolean()" },
+          "ledsActive": { ".validate": "newData.isBoolean()" },
+          "highPowerState": { 
+            ".validate": "newData.isArray() && newData.val().length <= 4",
+            "$index": { ".validate": "newData.isBoolean()" }
+          },
+          "servoPositions": {
+            ".validate": "newData.isArray() && newData.val().length <= 2",
+            "$index": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 180" }
+          },
+          "lastUpdate": { ".validate": "newData.isString() && newData.val().length <= 30" }
+        }
+      }
+    }
   }
 }
