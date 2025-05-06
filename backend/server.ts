@@ -1,115 +1,79 @@
-import express, { Request, Response } from 'express';
-import next from 'next';
-import bodyParser from 'body-parser';
-import { InfluxDB, Point } from '@influxdata/influxdb-client';
-import dotenv from 'dotenv';
-import Joi from 'joi';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import sensorRoutes from './routes/sensors';
+import deviceRoutes from './routes/devices';
+import weatherRoutes from './routes/weather';
+import { serverConfig } from './config/server.config';
+import admin from './utils/firebase';
+import dotenv from 'dotenv';
 
 dotenv.config();
 dotenv.config({ path: '.env.local' });
 
-const dev = process.env.NODE_ENV !== 'production';
-const app = next({ dev });
-const handle = app.getRequestHandler();
+const app = express();
 
-const influxdbOrg = process.env.INFLUXDB_ORG;
-const influxdbBucket = process.env.INFLUXDB_BUCKET;
-const influxdbToken = process.env.INFLUXDB_TOKEN;
-const influxdbUrl = process.env.INFLUXDB_URL;
+// Security middleware
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 
-if (!influxdbOrg || !influxdbBucket || !influxdbToken || !influxdbUrl) {
-  throw new Error('InfluxDB environment variables are not set');
-}
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later'
+});
+app.use(limiter);
 
-const client = new InfluxDB({ url: influxdbUrl, token: influxdbToken });
-const writeApi = client.getWriteApi(influxdbOrg, influxdbBucket);
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-interface SensorData {
-  timestamp: string;
-  temperature: number;
-  pressure: number;
-  humidity: number;
-  gasResistance: number;
-  iaqPercent: number;
-  iaqScore: number;
-  eCO2Value: number;
-}
-
-const writeSensorData = async (sensorData: SensorData) => {
-  const point = new Point('sensor_readings')
-    .timestamp(new Date(sensorData.timestamp))
-    .floatField('temperature', sensorData.temperature)
-    .floatField('pressure', sensorData.pressure)
-    .floatField('humidity', sensorData.humidity)
-    .intField('gasResistance', sensorData.gasResistance)
-    .intField('iaqPercent', sensorData.iaqPercent)
-    .intField('iaqScore', sensorData.iaqScore)
-    .intField('eCO2Value', sensorData.eCO2Value);
-  writeApi.writePoint(point);
-  await writeApi.flush();
-};
-
-app.prepare().then(() => {
-  const server = express();
-
-  server.use(bodyParser.json()); // For parsing application/json
-
-  // Custom API routes
-  server.get('/api/hello', (_req: Request, res: Response) => {
-    res.json({ message: 'Hello from Express!' });
-  });
-
-  server.post('/api/sensorData', async (req: Request, res: Response) => {
-    try {
-      const schema = Joi.object({
-        timestamp: Joi.date().iso().required(),
-        temperature: Joi.number().required(),
-        pressure: Joi.number().required(),
-        humidity: Joi.number().required(),
-        gasResistance: Joi.number().required(),
-        iaqPercent: Joi.number().required(),
-        iaqScore: Joi.number().required(),
-        eCO2Value: Joi.number().required(),
-      });
-
-      const { error, value: sensorData } = schema.validate(req.body, { abortEarly: false });
-
-      if (error) {
-        const errorDetails = error.details.map((detail) => detail.message);
-        console.error('Validation errors:', errorDetails);
-
-        const errorPoint = new Point('sensor_readings_error')
-          .timestamp(new Date().toISOString())
-          .stringField('errors', `${errorDetails}`);
-        writeApi.writePoint(errorPoint);
-        await writeApi.flush();
-
-        res.status(400).json({ error: errorDetails });
-        return;
-      }
-
-      // Write to InfluxDB
-      await writeSensorData(sensorData);
-
-      res.status(200).send('Sensor data received and stored.');
-    } catch (error) {
-      console.error('Error:', error);
-      res.status(500).send('Error processing sensor data.');
+// Token cleanup job - remove expired sessions
+setInterval(async () => {
+  try {
+    const sessionsRef = admin.database().ref('sessions');
+    const now = Date.now();
+    const snapshot = await sessionsRef
+      .orderByChild('expiresAt')
+      .endAt(now)
+      .once('value');
+    
+    const updates: { [key: string]: null } = {};
+    snapshot.forEach(child => {
+      updates[child.key] = null;
+    });
+    
+    if (Object.keys(updates).length > 0) {
+      await sessionsRef.update(updates);
+      console.log(`Cleaned up ${Object.keys(updates).length} expired sessions`);
     }
-  });
+  } catch (error) {
+    console.error('Session cleanup error:', error);
+  }
+}, 60 * 60 * 1000); // Run every hour
 
-  // Mount sensor routes
-  server.use('/api', sensorRoutes);
+// Routes
+app.use('/api/sensors', sensorRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/weather', weatherRoutes);
 
-  // Default handler for all other routes
-  server.all('*', (req: Request, res: Response) => {
-    return handle(req, res);
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
   });
+});
 
-  const port = process.env.PORT || 3000;
-  server.listen(port, (err?: Error) => {
-    if (err) throw err;
-    console.log(`> Ready on http://localhost:${port}`);
-  });
+// Start server
+const port = serverConfig.server.port;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log(`Environment: ${serverConfig.server.env}`);
 });
